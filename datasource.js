@@ -93,32 +93,25 @@ function updateData(callback) {
   });  
 }
 
-// Create a HTTP server
-http.createServer(function (req, res) {
-  switch (status) {
-    case 200:
-      res.writeHead(200, {'Content-Type': 'application/json'});
-      res.end(JSON.stringify(data));
-      break;
-    case 500:
-    case 503:
-    default:
-      res.writeHead(status);
-      res.end();
-      break;
-  }
-}).listen(1337, '127.0.0.1');
-console.log('Server running at http://127.0.0.1:1337/');
-
 // set up polling job
-var task_is_running = false;
-setInterval(function(){
-    if(!task_is_running){
-        task_is_running = true;
-        updateData(function(result){
-            console.log("Update done. Status: " + status);
-            task_is_running = false;
-        });
-    }
-}, interval);
+function startPolling(cb) {
+  var task_is_running = false;
+  function poll(){
+      if(!task_is_running){
+          task_is_running = true;
+          updateData(function(result){
+              console.log("Update completed.");
+              if (cb) cb(result, data, true); // TODO set changed flag accordingly
+              task_is_running = false;
+          });
+      }
+  }  
+  setInterval(poll, interval);
+  poll();
+}
+
+module.exports = {
+  getData: function() { return data; },
+  startPolling: startPolling
+};
 

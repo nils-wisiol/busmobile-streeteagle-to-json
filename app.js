@@ -7,9 +7,28 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./routes');
-var users = require('./routes/user');
 
 var app = express();
+
+// set up http server with socket.io and expose
+var server = require('http').createServer(app);
+var io = require('socket.io').listen(server);
+app.set('server', server);
+
+// datasource polling
+var datasource = require('./datasource');
+datasource.startPolling(function(result, data, changed) {
+  // send data out whenever it changed after polling the datasource
+  if (changed)
+    io.sockets.emit('data', data);
+});
+
+// socket interaction
+io.set('log level', 1);
+io.sockets.on('connection', function (socket) {
+  // send data out on connect
+  socket.emit('data', datasource.getData());
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -24,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(app.router);
 
 app.get('/', routes.index);
-app.get('/users', users.list);
+app.get('/partials/:name', routes.partials);
 
 /// catch 404 and forwarding to error handler
 app.use(function(req, res, next) {
