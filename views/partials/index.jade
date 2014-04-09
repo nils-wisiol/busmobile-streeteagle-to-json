@@ -1,6 +1,19 @@
-h1 as of {{ data.timestamp }}
-h2 busses
-ul
-  li(ng-repeat='b in data.bus')
-    p {{ b.address }}
+google-map(class='fullscreen', center='map.center', zoom='map.zoom', draggable='true')
+  marker(ng-repeat='b in data.bus',coords='b')
+    marker-label(content='b.route', anchor='22 0', class='marker-labels')
+      window(isIconVisibleOnClick='true', options='map.infoWindowWithCustomClass.options')
+        h2 {{ b.route }}
+        p {{ b.address }}
+div(style='position: absolute; bottom: 50px; width: 100%;')
+  div(class='container-fluid')
+    div(class='row')
+      div(class='col-md-2 col-md-offset-10')
+        form(role='form')
+          button(ng-click='map.center={ latitude: 43.001559, longitude: -78.786035 }', type='submit', class='btn-lg btn-primary btn btn-block') North Campus
+          button(ng-click='map.center={ latitude: 42.952790, longitude: -78.818526 }', type='submit', class='btn-lg btn-primary btn btn-block') South Campus
+div(class='fullscreen modalx-container' ng-show='geolocation===null')
+  div(class='modalx')
+    h1 waiting for your position
+    p
+      a(ng-click='geolocation=false') I wish not to disclose my location
 

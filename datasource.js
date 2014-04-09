@@ -13,7 +13,7 @@ var options = {
 /**
  * Polling interval (ms)
  */
-var interval = 15000;
+var interval = 1500000;
 
 /**
  * The data currently served by this server
@@ -61,7 +61,7 @@ function parseResponse(body) {
     timestamp: new Date(),
   };
   
-  data.bus = find('AddBus', body, ['id', 'title', 'address', 'longitude', 'latitude', 'iconColor', 'direction', 'speed', 'timestamps', 'lastStop', 'route']);
+  data.bus = find('AddBus', body, ['id', 'title', 'address', 'latitude', 'longitude', 'iconColor', 'direction', 'speed', 'timestamps', 'lastStop', 'route']);
   data.stop = find('AddStop', body, ['title', 'longitude', 'latitude', 'icon', 'route']);
 
   return data;
@@ -100,7 +100,7 @@ function startPolling(cb) {
       if(!task_is_running){
           task_is_running = true;
           updateData(function(result){
-              console.log("Update completed.");
+              console.log("Update completed. Currently, there are " + data.bus.length + " busses");
               if (cb) cb(result, data, true); // TODO set changed flag accordingly
               task_is_running = false;
           });
