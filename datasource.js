@@ -13,7 +13,7 @@ var options = {
 /**
  * Polling interval (ms)
  */
-var interval = 15000;
+var interval = 750;
 
 /**
  * The data currently served by this server
