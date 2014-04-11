@@ -28,6 +28,7 @@ io.set('log level', 1);
 io.sockets.on('connection', function (socket) {
   // send data out on connect
   socket.emit('data', datasource.getData());
+  socket.emit('staticdata', datasource.getStaticData());
 });
 
 // view engine setup

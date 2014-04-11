@@ -4,6 +4,7 @@ google-map(class='fullscreen', center='map.center', zoom='map.zoom', draggable='
       window(isIconVisibleOnClick='true', options='map.infoWindowWithCustomClass.options')
         h2 {{ b.route }}
         p {{ b.address }}
+  polyline(ng-repeat='r in data.route',path='r.points',stroke='{color: r.color, weight: r.width, opacity: .5}')
 div(style='position: absolute; bottom: 50px; width: 100%;')
   div(class='container-fluid')
     div(class='row')

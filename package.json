@@ -1,6 +1,6 @@
 {
   "name": "busmobile",
-  "version": "0.0.1",
+  "version": "0.0.1-2",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -14,5 +14,9 @@
     "debug": "~0.7.4",
     "jade": "~1.3.0",
     "socket.io": "0.9.16"
+  },
+  "subdomain": "ubbus",
+  "engines": {
+    "node": "0.10.x"
   }
 }

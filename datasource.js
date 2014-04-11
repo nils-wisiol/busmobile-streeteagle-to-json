@@ -13,12 +13,17 @@ var options = {
 /**
  * Polling interval (ms)
  */
-var interval = 1500000;
+var interval = 15000;
 
 /**
  * The data currently served by this server
  */
-var data;
+var data = {};
+
+/**
+ * Data served by this server that is not expected to change
+ */
+var staticdata = {};
 
 /**
  * The current status of the server.
@@ -53,16 +58,51 @@ function parseResponse(body) {
     
     return result;
   }
+  
+  /**
+   * Convert component color notation into CSS hex notation
+   */
+  function rgbToHex(r, g, b) {
+      function componentToHex(c) {
+        var hex = (c-0).toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+      }
+      
+      return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+  }  
 
   // Object to hold the parsed data
   var data = {
     bus: [],
     stop: [],
+    route: [],
     timestamp: new Date(),
   };
   
+  
+  // get the data that chages
   data.bus = find('AddBus', body, ['id', 'title', 'address', 'latitude', 'longitude', 'iconColor', 'direction', 'speed', 'timestamps', 'lastStop', 'route']);
+  
+  // get the data that is expected to stay the same
   data.stop = find('AddStop', body, ['title', 'longitude', 'latitude', 'icon', 'route']);
+
+  var regex = /ResetRoutePoints\(\);(AddRoutePoint\(-?[0-9]*\.[0-9]*, -?[0-9]*\.[0-9]*\);)*AddRouteToMap\([0-9]*, [0-9]*, [0-9]*, [0-9]*\);/g;
+  (body.match(regex) || []).forEach(function(r) {
+    var innerregex = /AddRoutePoint\((-?[0-9]*\.[0-9]*), (-?[0-9]*\.[0-9]*)\);/g
+    var routeinfo = r.match(/AddRouteToMap\(([0-9]*), ([0-9]*), ([0-9]*), ([0-9]*)\);/);
+    var route = {
+      points: [],
+      color: rgbToHex(routeinfo[1], routeinfo[2], routeinfo[3]),
+      width: routeinfo[5],
+    };    
+    data.route.push(route);
+    (r.match(innerregex) || []).forEach(function(p) {
+      route.points.push({
+        latitude: p.match(/\((-?[0-9]*\.[0-9]*), /)[1],
+        longitude: p.match(/, (-?[0-9]*\.[0-9]*)\)/)[1],
+      });
+    });
+  });
 
   return data;
 }
@@ -80,7 +120,10 @@ function updateData(callback) {
       bodyChunks.push(chunk);
     }).on('end', function() {
       var body = Buffer.concat(bodyChunks).toString();
-      data = parseResponse(body);
+      var parsed = parseResponse(body);
+      data.bus = parsed.bus;
+      staticdata.stop = parsed.stop;
+      staticdata.route = parsed.route;
       status = 200;
       callback(true);
     });
@@ -100,7 +143,7 @@ function startPolling(cb) {
       if(!task_is_running){
           task_is_running = true;
           updateData(function(result){
-              console.log("Update completed. Currently, there are " + data.bus.length + " busses");
+              console.log("Update completed. Currently, there are " + data.bus.length + " busses, " + staticdata.stop.length + " stops, " + staticdata.route.length + " routes.");
               if (cb) cb(result, data, true); // TODO set changed flag accordingly
               task_is_running = false;
           });
@@ -112,6 +155,7 @@ function startPolling(cb) {
 
 module.exports = {
   getData: function() { return data; },
+  getStaticData: function() { return staticdata; },
   startPolling: startPolling
 };
 
