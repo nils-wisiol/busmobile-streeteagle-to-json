@@ -9,11 +9,11 @@ google-map(class='fullscreen', center='map.center', zoom='map.zoom', draggable='
   marker(ng-repeat='s in data.stop',coords='s')
     marker-label(content='s.name', anchor='22 0', class='marker-labels')
   polyline(ng-repeat='r in data.route',path='r.points',stroke='{color: r.color, weight: r.width, opacity: .5}')
-div(style='position: absolute; bottom: 50px; width: 100%;')
+div(style='position: absolute; bottom: 50px; width: 100%;pointer-events: none;')
   div(class='container-fluid')
     div(class='row')
       div(class='col-md-2 col-md-offset-10')
-        form(role='form')
+        form(role='form',style='pointer-events:all;')
           button(ng-click='map.center=geolocation', ng-hide='geolocation===false||geolocation===null', type='submit', class='btn-lg btn-primary btn btn-block') My Location
           button(ng-click='map.center={ latitude: 43.001559, longitude: -78.786035 }', type='submit', class='btn-lg btn-primary btn btn-block') North Campus
           button(ng-click='map.center={ latitude: 42.952790, longitude: -78.818526 }', type='submit', class='btn-lg btn-primary btn btn-block') South Campus
