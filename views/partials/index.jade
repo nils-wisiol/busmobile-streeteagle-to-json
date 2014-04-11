@@ -19,10 +19,6 @@ div(style='position: absolute; bottom: 50px; width: 100%;pointer-events: none;')
           button(ng-click='map.center={ latitude: 42.952790, longitude: -78.818526 }', type='submit', class='btn-lg btn-primary btn btn-block') South Campus
           button(ng-click='map.center={ latitude: 42.898822, longitude: -78.864966 }', type='submit', class='btn-lg btn-primary btn btn-block') Med Campus
         div(class='well')
-          h2 closest bus
-          p(ng-repeat='b in data.bus|orderBy:geolocDistance|limitTo:1').
-            {{ b.route }}, last stop: {{ b.lastStop }}, distance: {{ geolocDistance(b) }}km
-        div(class='well')
           h2 closest stops
           p(ng-repeat='s in data.stop|orderBy:geolocDistance|limitTo:3').
             p
