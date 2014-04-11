@@ -1,4 +1,6 @@
 http = require('http');
+csv = require('csv');
+fs = require('fs');
 
 /**
  * The server's data source
@@ -25,26 +27,26 @@ var data = {};
  */
 var staticdata = {
   stop: [
-    { name: 'Creekside North', latitude: 43.011410, longitude: -78.792681 },
-    { name: 'Creekside South', latitude: 43.010907, longitude: -78.790595 },
-    { name: 'Ellicot Tunnel', latitude: 43.008193, longitude: -78.785898 },
-    { name: 'South Lake (to Spine)', latitude: 43.003391, longitude: -78.7782870 },
-    { name: 'Alumni/Stadium (to Spine)', latitude: 43.000213, longitude: -78.780025 },
-    { name: 'Center for the Arts', latitude: 43.000245, longitude: -78.782852 },
-    { name: 'Lockwood (to Spine)', latitude: 42.999825, longitude: -78.785197 },
-    { name: 'Baldy/O\'Brian', latitude: 43.000170, longitude: -78.787493 },
-    { name: 'Founder\'s Plaza', latitude: 43.000346, longitude: -78.788942 },
-    { name: 'Cooke / Hochstetter', latitude: 42.999519, longitude: -78.791130 },
-    { name: 'Natural Sciences Complex', latitude: 43.000076, longitude: -78.792584 },
-    { name: 'Flickinger Court', latitude: 43.005211, longitude: -78.800545 },
-    { name: 'Hadley Village', latitude: 42.998587, longitude: -78.794888 },
-    { name: 'Computing Center', latitude: 43.001437, longitude: -78.792442 },  
-    { name: 'Lower Capen', latitude: 43.001441, longitude: -78.789647 },
-    { name: 'Student Union', latitude: 43.001724, longitude: -78.786203 },
-    { name: 'Lockwood (to Ellicot)', latitude: 43.001055, longitude: -78.785380 },
-    { name: 'Alumni/Stadium (to Ellicot)', latitude: 43.000213, longitude: -78.780025 },
-    { name: 'South Lake (to Ellicot)', latitude: 43.002320, longitude: -78.776495 },
-    { name: 'Greiner Hall', latitude: 43.006698, longitude: -78.785858 },
+    { name: 'Creekside North', latitude: 43.011410, longitude: -78.792681, departure: [] },
+    { name: 'Creekside South', latitude: 43.010907, longitude: -78.790595, departure: [] },
+    { name: 'Ellicott Tunnel', latitude: 43.008193, longitude: -78.785898, departure: [] },
+    { name: 'South Lake (to Spine)', latitude: 43.003391, longitude: -78.7782870, departure: [] },
+    { name: 'Alumni/Stadium (to Spine)', latitude: 43.000213, longitude: -78.780025, departure: [] },
+    { name: 'Center for the Arts', latitude: 43.000245, longitude: -78.782852, departure: [] },
+    { name: 'Lockwood (to Spine)', latitude: 42.999825, longitude: -78.785197, departure: [] },
+    { name: 'Baldy/O\'Brian', latitude: 43.000170, longitude: -78.787493, departure: [] },
+    { name: 'Founder\'s Plaza', latitude: 43.000346, longitude: -78.788942, departure: [] },
+    { name: 'Cooke / Hochstetter', latitude: 42.999519, longitude: -78.791130, departure: [] },
+    { name: 'Natural Sciences Complex', latitude: 43.000076, longitude: -78.792584, departure: [] },
+    { name: 'Flickinger Court', latitude: 43.005211, longitude: -78.800545, departure: [] },
+    { name: 'Hadley Village', latitude: 42.998587, longitude: -78.794888, departure: [] },
+    { name: 'Computing Center', latitude: 43.001437, longitude: -78.792442, departure: [] },  
+    { name: 'Lower Capen', latitude: 43.001441, longitude: -78.789647, departure: [] },
+    { name: 'Student Union', latitude: 43.001724, longitude: -78.786203, departure: [] },
+    { name: 'Lockwood (to Ellicot)', latitude: 43.001055, longitude: -78.785380, departure: [] },
+    { name: 'Alumni/Stadium (to Ellicot)', latitude: 43.000213, longitude: -78.780025, departure: [] },
+    { name: 'South Lake (to Ellicot)', latitude: 43.002320, longitude: -78.776495, departure: [] },
+    { name: 'Greiner Hall', latitude: 43.006698, longitude: -78.785858, departure: [] },
   ],
 };
 
@@ -52,6 +54,54 @@ var staticdata = {
  * The current status of the server.
  */
 var status = 503; // currently unavailable (for startup phase)
+
+/**
+ * Reads a CSV schedule file of the following format:
+ * Each line looks like:
+ * STOP NAME, DEP TIME, DEP TIME, DEP TIME, DEP TIME, DEP TIME
+ * The filename is the name of the route.
+ * 
+ * The read departure times will be added to the stop as found in the stops array.
+ */
+function parseRouteSchedule(name, stops, days) {
+
+  function findStopByName(name) {
+    var result = null;
+    staticdata.stop.forEach(function(s) {
+      if (s.name == name)
+        result = s;
+    });
+    return result;
+  }
+
+  csv()
+  .from.path(__dirname+'/schedules/' + name + '.csv', { delimiter: ',', escape: '"' })
+  .on('record', function(row,index){
+    var stop = findStopByName(row[0]);
+    
+    var times = [];
+    var lastHours = 0;
+    var offset = 0;
+    row.splice(1).forEach(function(t) {
+      // normalize time
+      if (t=='') return;
+      var hours = t.match(/([0-1]?[0-9]):/)[1] - 0;
+      var minutes = t.match(/:([0-5]?[0-9])/)[1] - 0;
+      if (lastHours > hours) offset += 12;
+      lastHours = hours;
+      
+      // Add departure time to the stop object
+      stop.departure.push({
+        time: { hours: (hours + offset), minutes: (minutes < 10 ? '0' + minutes : minutes) },
+        days: days,
+        route: name,
+      })
+    });
+  })
+  .on('error', function(error){
+    console.log(error.message);
+  });
+}
 
 /**
  * Parses a response from the data source
@@ -159,7 +209,9 @@ function updateData(callback) {
   });  
 }
 
-// set up polling job
+/**
+ * Start polling the data from the data source.
+ */
 function startPolling(cb) {
   var task_is_running = false;
   function poll(){
@@ -175,6 +227,9 @@ function startPolling(cb) {
   setInterval(poll, interval);
   poll();
 }
+
+// read static schedule data
+parseRouteSchedule('North Campus Shuttle Weekday', staticdata.stop, [0,1,2,3,4]);
 
 module.exports = {
   getData: function() { return data; },

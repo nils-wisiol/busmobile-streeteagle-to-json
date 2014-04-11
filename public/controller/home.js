@@ -41,5 +41,10 @@ angular.module('busmobile.controllers').controller('HomeController', function($s
     var distance = earth_radius * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
     return distance.toFixed(3);
   };
+  $scope.depTime = function(departure) {
+    var o = new Date();
+    var res = departure.time.hours >= o.getHours() && departure.time.minutes >= o.getMinutes();
+    return res;
+  }
 });
 
