@@ -1,4 +1,4 @@
-angular.module('busmobile.controllers').controller('HomeController', function($scope, socket, geolocation) {
+angular.module('busmobile.controllers').controller('HomeController', function($scope, $interval, socket, geolocation) {
   $scope.data = {};
   function setData(data) {
     Object.keys(data).forEach(function(k) {
@@ -46,6 +46,7 @@ angular.module('busmobile.controllers').controller('HomeController', function($s
     var res = departure.time.hours > o.getHours() || 
       (departure.time.hours == o.getHours() && departure.time.minutes >= o.getMinutes());
     return res;
-  }
+  };
+  $interval($scope.digest, 15000);
 });
 
