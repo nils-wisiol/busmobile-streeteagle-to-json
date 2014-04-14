@@ -92,7 +92,7 @@ function parseRouteSchedule(name, stops, days) {
       
       // Add departure time to the stop object
       stop.departure.push({
-        time: { hours: (hours + offset), minutes: (minutes < 10 ? '0' + minutes : minutes) },
+        time: { hours: (hours - 0 + offset), minutes: (minutes < 10 ? '0' + minutes : minutes) - 0 },
         days: days,
         route: name,
       })

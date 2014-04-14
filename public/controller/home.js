@@ -43,7 +43,8 @@ angular.module('busmobile.controllers').controller('HomeController', function($s
   };
   $scope.depTime = function(departure) {
     var o = new Date();
-    var res = departure.time.hours >= o.getHours() && departure.time.minutes >= o.getMinutes();
+    var res = departure.time.hours > o.getHours() || 
+      (departure.time.hours == o.getHours() && departure.time.minutes >= o.getMinutes());
     return res;
   }
 });
